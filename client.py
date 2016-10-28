@@ -1,39 +1,24 @@
 import socket
 import sys
+import select
 import pickle
-import threading
-import selectors
 
-HOST = sys.argv[1]
-PORT = int(sys.argv[2])
+HOST = "127.0.1.1"
+PORT = int(sys.argv[1])
+RECV_BUFFER = 30
 
-sel=selectors.DefaultSelector()
+server = socket.socket()
+server.connect((HOST,PORT))
 
-class reader(threading.Thread):
-	"""docstring for reader"""
-	def __init__(self):
-		super(reader, self).__init__()
-	def run(self):
-		while True:
-			data=input()
-			#
+inputs=[server,sys.stdin]
 
-class writer(threading.Thread):
-	"""docstring for writer"""
-	def __init__(self,soc):
-		super(writer, self).__init__()
-		self.soc=soc
-	def run(self):
-
-		
-
-soc = socket.socket()
-try:
-	soc.connect((HOST,PORT))
-except:
-	print("Cannot connect to ",HOST," at port ",PORT)
-	exit()
-r=reader();
-w=writer(soc);
-r.start();
-w.start();
+while True:
+	print("\nYou: ",end="")
+	readable,writable,exceptional = select.select(inputs,[],[])
+	for r in readable:
+		if r is server:
+			print("\nOther: ",end="")
+			print(pickle.loads(r.recv(RECV_BUFFER)))
+		if r is sys.stdin:
+			msg = input()
+			server.send(pickle.dumps(msg))

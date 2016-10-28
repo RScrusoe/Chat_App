@@ -1,53 +1,25 @@
 import socket
 import sys
+import select
 import pickle
-import threading
+
+RECV_BUFFER = 1024
 
 HOST = socket.gethostname()
-PORT = sys.argv[1]
+PORT = int(sys.argv[1])
 
-class ServerClass(threading.Thread):
-	"""Class for creating threads for working with clients"""
-	MSG_SIZE = 70
-	def __init__(self,port,tID,addr):
-		super(ServerClass, self).__init__()
-		self.tID=tID
-		self.addr=addr
-		self.port=port
-		self.soc=socket.socket()
-	def run(self):
-		self.soc.bind((HOST,int(port)))
-		self.soc.listen(1)
-		try:
-			conn,naddr=self.soc.accept()
-			if self.addr!=naddr
-				raise Exception("Address does not match")
-		except Exception as inst:
-			self.soc.close()
-			print(inst)
-			exit()
-		data="0"
-		while data != '':
-			data = self.soc.recv(MSG_SIZE)
-			if Data is not None:
-				print(data)
-
-		
-
-nofOfConnections=0;
-threadsList=[]
-s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-s.bind((HOST,PORT))
-s.listen(5)
+server = socket.socket()
+server.bind((HOST,PORT))
+server.listen(1)
+client,address = server.accept()
+inputs=[client,sys.stdin]
 while True:
-	print("Waiting for connections (Total Connections: ",nofOfConnections,") ):")
-	conn,addr = s.accept()
-	if conn is not None:
-		print("[+1] Connected to ",addr)
-		conn.send(str(PORT+1)+'\n')
-		nofOfConnections+=1
-		print("Total connections: ",nofOfConnections)
-		tempThread = ServerClass(PORT+1,nofOfConnections-1,addr)
-		PORT+=1
-		tempThread.start()
-		threadsList.append(tempThread)
+	print("\nYou: ",end ="")
+	readable,writable,exeptional = select.select(inputs,[],[])
+	for r in readable:
+		if r is client:
+			print("\nOther: ",end="")
+			print(pickle.loads(r.recv(RECV_BUFFER)))
+		if r is sys.stdin:
+			msg = input()
+			client.send(pickle.dumps(msg))
